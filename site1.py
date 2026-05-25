@@ -4,7 +4,7 @@ import numpy as np
 import plotly.express as px
 from datetime import datetime, timedelta
 
-st.set_page_config(layout="wide", page_title="Sledování odpadních vod", initial_sidebar_state="expanded")
+st.set_page_config(layout="wide", page_title="Sledování odpadních vod", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
@@ -31,14 +31,6 @@ st.markdown("""
         background-color: #0ea5e9 !important;
         color: white !important;
         border-color: #0284c7 !important;
-    }
-    [data-testid="stMetricValue"] {
-        font-size: 32px;
-        color: #38bdf8;
-    }
-    [data-testid="stMetricLabel"] {
-        font-size: 14px;
-        color: #94a3b8;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -97,15 +89,21 @@ def load_data():
 
 df = load_data()
 
-st.sidebar.markdown("### 🎛️ Filtry dat")
-selected_pathogens = st.sidebar.multiselect("Cílové patogeny", df['Patogen'].unique(), default=df['Patogen'].unique())
-selected_cities = st.sidebar.multiselect("Místa odběru (ČOV)", df['Město'].unique(), default=df['Město'].unique())
-date_range = st.sidebar.slider(
-    "Časová osa", 
-    min_value=df['Datum'].min().date(), 
-    max_value=df['Datum'].max().date(),
-    value=(df['Datum'].min().date() + timedelta(days=30), df['Datum'].max().date())
-)
+filter_col1, filter_col2, filter_col3 = st.columns(3)
+
+with filter_col1:
+    selected_pathogens = st.multiselect("Cílové patogeny", df['Patogen'].unique(), default=df['Patogen'].unique())
+
+with filter_col2:
+    selected_cities = st.multiselect("Místa odběru (ČOV)", df['Město'].unique(), default=df['Město'].unique())
+
+with filter_col3:
+    date_range = st.slider(
+        "Časová osa", 
+        min_value=df['Datum'].min().date(), 
+        max_value=df['Datum'].max().date(),
+        value=(df['Datum'].min().date() + timedelta(days=30), df['Datum'].max().date())
+    )
 
 filtered_df = df[
     (df['Patogen'].isin(selected_pathogens)) & 
@@ -113,18 +111,6 @@ filtered_df = df[
     (df['Datum'].dt.date >= date_range[0]) &
     (df['Datum'].dt.date <= date_range[1])
 ]
-
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Zpracované vzorky", len(filtered_df))
-
-if not filtered_df.empty:
-    col2.metric("Průměrná nálož (kopie/ml)", f"{filtered_df['Virová_nálož_kopie_ml'].mean():.1f}")
-    col3.metric("Průměrné GU/l", f"{filtered_df['GU_na_l'].mean():,.0f}".replace(",", " "))
-else:
-    col2.metric("Průměrná nálož (kopie/ml)", "0.0")
-    col3.metric("Průměrné GU/l", "0")
-    
-col4.metric("Sledované ČOV", len(selected_cities))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
