@@ -14,31 +14,6 @@ st.markdown("""
         padding-left: 2rem;
         padding-right: 2rem;
     }
-    .top-nav {
-        background-color: #0f172a;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 25px;
-        margin-top: 10px;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border: 1px solid #1e293b;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    .top-nav h1 {
-        margin: 0;
-        font-size: 26px;
-        color: #38bdf8;
-        font-family: 'Arial', sans-serif;
-    }
-    .top-nav p {
-        margin: 0;
-        color: #94a3b8;
-        font-size: 14px;
-        margin-top: 4px;
-    }
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: #1e293b;
@@ -66,16 +41,6 @@ st.markdown("""
         color: #94a3b8;
     }
     </style>
-    
-    <div class="top-nav">
-        <div>
-            <h1>🦠 Monitorování patogenů v odpadních vodách</h1>
-            <p>Indikátory sledování a virová nálož v reálném čase</p>
-        </div>
-        <div>
-            <p style="color: #10b981; font-weight: bold;">⬤ Aktivní systém</p>
-        </div>
-    </div>
 """, unsafe_allow_html=True)
 
 @st.cache_data
@@ -163,42 +128,17 @@ col4.metric("Sledované ČOV", len(selected_cities))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-tab_overview, tab_histograms, tab_data = st.tabs(["📊 Přehled, mapa a trendy", "📈 Analytické histogramy", "📋 Zdrojová data"])
+tab_overview, tab_histograms = st.tabs(["📊 Přehled a trendy", "📈 Analytické histogramy"])
 
 with tab_overview:
-    map_col, pie_col = st.columns(2)
-    
-    with map_col:
-        latest_date = filtered_df['Datum'].max()
-        map_data = filtered_df[filtered_df['Datum'] == latest_date]
-        
-        if map_data.empty and not filtered_df.empty:
-            latest_date = filtered_df['Datum'].max()
-            map_data = filtered_df[filtered_df['Datum'] == latest_date]
-
-        if not map_data.empty:
-            fig_map = px.scatter_mapbox(
-                map_data, lat="Zeměpisná_šířka", lon="Zeměpisná_délka", size="GU_na_l",
-                color="Patogen",
-                hover_name="Město", hover_data=["GU_na_l"],
-                zoom=6.0, center={"lat": 49.8, "lon": 15.5},
-                mapbox_style="carto-positron",
-                title=f"Prostorové rozložení k {latest_date.date()}"
-            )
-            fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, height=400)
-            st.plotly_chart(fig_map, use_container_width=True)
-        else:
-            st.info("K vybranému datu nejsou dostupná data pro mapu.")
-        
-    with pie_col:
-        if not filtered_df.empty:
-            fig_pie = px.sunburst(
-                filtered_df, path=['Město', 'Patogen'], values='GU_na_l',
-                title="Podíl celkových GU/l podle ČOV a patogenu",
-                color_discrete_sequence=px.colors.qualitative.Set2
-            )
-            fig_pie.update_layout(margin=dict(t=40, b=20, l=20, r=20), height=400)
-            st.plotly_chart(fig_pie, use_container_width=True)
+    if not filtered_df.empty:
+        fig_pie = px.sunburst(
+            filtered_df, path=['Město', 'Patogen'], values='GU_na_l',
+            title="Podíl celkových GU/l podle ČOV a patogenu",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        fig_pie.update_layout(margin=dict(t=40, b=20, l=20, r=20), height=400)
+        st.plotly_chart(fig_pie, use_container_width=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -289,6 +229,3 @@ with tab_histograms:
             marker_line_width=0.5
         )
         st.plotly_chart(fig_bar, use_container_width=True)
-
-with tab_data:
-    st.dataframe(filtered_df.sort_values(by="Datum", ascending=False), use_container_width=True, height=400)
